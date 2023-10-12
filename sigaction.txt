@@ -1,0 +1,1 @@
+https://stackoverflow.com/questions/48830222/get-pid-of-the-signal-sender-in-c
