@@ -2,6 +2,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "shell.h"
 #include "StringVector.h"
 
@@ -62,18 +63,16 @@ shell_execute_line( struct Shell *s )
             char *command = string_vector_get( &tokens, 1 );
             char *tmp     = malloc( 256 * sizeof( char ) );
             tmp           = strjoinarray( tmp, &tokens, 1, string_vector_size( &tokens ), " " );
-            system(tmp);
+            system( tmp );
             free( tmp );
         }
     }
     else if ( strcmp( command, "pokemon" ) == 0 ) {
         if ( string_vector_size( &tokens ) == 1 ) {
-        system( "curl -s -L "
+            system(
+                "curl -s -L "
                 "'https://raw.githubusercontent.com/shinya/pokemon-terminal-art/main/hello.sh' | "
                 "bash" );
-        } else {
-            system( "curl -s -L "
-                "'https://raw.githubusercontent.com/shinya/pokemon-terminal-art/main/256color/diamond/%s'", );
         }
     }
     else if ( strcmp( command, "cd" ) == 0 ) {
