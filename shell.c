@@ -35,6 +35,7 @@ void
 shell_read_line( struct Shell *s )
 {
     char *pwd = getcwd( NULL, 0 );
+    printf( "\033[0;32m" );
     printf( "Math-X [%d] - %s $>", ++s->line_number, pwd );
     ssize_t bytes_read = getline( &s->buffer, &s->buffer_size, stdin );
     if ( bytes_read < 0 ) {
@@ -50,7 +51,8 @@ shell_execute_line( struct Shell *s )
 
     char *command = string_vector_get( &tokens, 0 );
     if ( strcmp( command, "exit" ) == 0 ) {
-        printf( "Goodby !" );
+        printf( "\033[0;36m" );
+        printf( "Goodby ! \n" );
         s->running = false;
     }
     else if ( strcmp( command, "!" ) == 0 ) {
@@ -60,12 +62,49 @@ shell_execute_line( struct Shell *s )
             system( current_shell );
         }
         else {
-            char *command = string_vector_get( &tokens, 1 );
-            char *tmp     = malloc( 256 * sizeof( char ) );
-            tmp           = strjoinarray( tmp, &tokens, 1, string_vector_size( &tokens ), " " );
-            system( tmp );
-            free( tmp );
+            // char *tmp = malloc( 256 * sizeof( char ) );
+            // tmp       = strjoinarray( tmp, &tokens, 1, string_vector_size( &tokens ), " " );
+            char **arg;
+            arg = malloc( sizeof( char * ) * string_vector_size( &tokens ) );
+            size_t i;
+
+            for ( i = 1; i < string_vector_size( &tokens ); i++ ) {
+                // strcpy( arg[i - 1], string_vector_get( &tokens, i ) );
+                arg[i - 1] = strdup( string_vector_get( &tokens, i ) );
+            }
+            arg[i - 1] = NULL;
+
+            pid_t pid = fork();
+            if ( pid == 0 ) {
+                execvp( arg[0], arg );
+                perror( "execvp" );
+                exit( EXIT_FAILURE );
+            }
+            else {
+                int status;
+                waitpid( pid, &status, 0 );
+            }
+            for( i = 0; i < string_vector_size( &tokens ); i++ ) {
+                free( arg[i] );
+            }
+            free( arg );
         }
+    }
+    else if ( strcmp( command, "tmp" ) == 0 ) {
+        char *tmp = malloc( 256 * sizeof( char ) );
+        tmp       = strjoinarray( tmp, &tokens, 1, string_vector_size( &tokens ), " " );
+        pid_t pid = fork();
+        if ( pid == 0 ) {
+            char *arg[] = { "ls", "-l", "/tmp", NULL };
+            execvp( "ls", arg );
+            perror( "execvp" );
+            exit( EXIT_FAILURE );
+        }
+        else {
+            int status;
+            waitpid( pid, &status, 0 );
+        }
+        free( tmp );
     }
     else if ( strcmp( command, "pokemon" ) == 0 ) {
         if ( string_vector_size( &tokens ) == 1 ) {
@@ -74,6 +113,9 @@ shell_execute_line( struct Shell *s )
                 "'https://raw.githubusercontent.com/shinya/pokemon-terminal-art/main/hello.sh' | "
                 "bash" );
         }
+    }
+    else if ( strcmp( command, "matrix" ) == 0 ) {
+        system( "~/notroot/usr/bin/cmatrix -r" );
     }
     else if ( strcmp( command, "cd" ) == 0 ) {
         char *path = NULL;
@@ -88,6 +130,9 @@ shell_execute_line( struct Shell *s )
         if ( ret != 0 ) {
             printf( "cd: %s: No such file or directory\n", path );
         }
+    }
+    else if ( strcmp( command, "" ) == 0 ) {
+        printf( "\n" );
     }
     else {
         printf( "Unknown command: %s\n", command );
